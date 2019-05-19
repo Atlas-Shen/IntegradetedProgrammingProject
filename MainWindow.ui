@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>498</width>
-    <height>618</height>
+    <width>507</width>
+    <height>621</height>
    </rect>
   </property>
   <property name="font">
@@ -36,7 +36,7 @@
        </font>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="CNFSolverTab">
        <attribute name="title">
