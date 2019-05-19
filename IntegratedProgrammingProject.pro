@@ -27,6 +27,7 @@ CONFIG += c++11
 SOURCES += \
         CNFSolver.cpp \
         CNFSolverThread.cpp \
+        SudokuGeneratorThread.cpp \
         main.cpp \
         MainWindow.cpp
 
@@ -34,7 +35,8 @@ HEADERS += \
         CNFSolver.h \
         CNFSolverThread.h \
         List.h \
-        MainWindow.h
+        MainWindow.h \
+        SudokuGeneratorThread.h
 
 FORMS += \
         MainWindow.ui

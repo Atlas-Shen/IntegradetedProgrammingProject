@@ -8,7 +8,7 @@ class CNFSolverThread : public QThread {
     Q_OBJECT
 
 public:
-    CNFSolverThread(const QString &, bool);
+    CNFSolverThread(const QString &, bool, QObject *parent = nullptr);
 
 signals:
     void sendResult(QString);

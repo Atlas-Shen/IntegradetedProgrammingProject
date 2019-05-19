@@ -9,9 +9,11 @@ class CNFSolver {
 public:
 
     explicit CNFSolver(std::istream &, bool);
+    explicit CNFSolver(unsigned [][10]);
     ~CNFSolver();
     bool isSatisfied(); //DPLL based algorithm
     void printSatisfiabilityInfo(std::ostream &);
+    static bool solveSudoku(unsigned [][10]);
 
     //disable all the unused functions
     CNFSolver(const CNFSolver &) = delete;

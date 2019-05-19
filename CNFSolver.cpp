@@ -54,6 +54,147 @@ CNFSolver::CNFSolver(std::istream &input, bool selectedBranchingRule)
     }
 }
 
+CNFSolver::CNFSolver(unsigned sudoku[][10])
+    : originalClauseNum(11988), //8829
+      currentClauseNum(11988),
+      clausesInfo(new ClauseInfo[originalClauseNum]),
+      variableNum(729),
+      variablesInfo(new VariableInfo[variableNum + 1]),
+      getBranchingLiteral(&CNFSolver::getMOMSBranchingLiteral),
+      originalMaxClauseLength(0),
+      hasEmptyClause(false) {
+    int sudokuVariable[10][10][10];
+    int base = 0;
+    for (unsigned x = 1; x <= 9; ++x) {
+        for (unsigned y = 1; y <= 9; ++y) {
+            for (unsigned z = 1; z <= 9; ++z)
+                sudokuVariable[x][y][z] = ++base;
+            if (sudoku[x][y] != 0)
+                unitClauseLiteralsToAssign.addBack(sudokuVariable[x][y][sudoku[x][y]]);
+        }
+    }
+    unsigned clauseIndex = static_cast<unsigned>(-1);
+
+    //The minimal encoding is as below:
+
+    //There is at least one number in each entry
+    for (unsigned x = 1; x <= 9; ++x) {
+        for (unsigned y = 1; y <= 9; ++y) {
+            ++clauseIndex;
+            for (unsigned z = 1; z <= 9; ++z) {
+                clausesInfo[clauseIndex].literals.addBack(sudokuVariable[x][y][z]);
+                variablesInfo[sudokuVariable[x][y][z]].positiveOccur.addBack(clauseIndex);
+            }
+        }
+    }
+    //Each number appears at most once in each row
+    for (unsigned y = 1; y <= 9; ++y) {
+        for (unsigned z = 1; z <= 9; ++z) {
+            for (unsigned x = 1; x <= 8; ++x) {
+                for (unsigned i = x + 1; i <= 9; ++i) {
+                    ++clauseIndex;
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[x][y][z]);
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[i][y][z]);
+                    variablesInfo[sudokuVariable[x][y][z]].negativeOccur.addBack(clauseIndex);
+                    variablesInfo[sudokuVariable[i][y][z]].negativeOccur.addBack(clauseIndex);
+                }
+            }
+        }
+    }
+    //Each number appears at most once in each column
+    for (unsigned x = 1; x <= 9; ++x) {
+        for (unsigned z = 1; z <= 9; ++z) {
+            for (unsigned y = 1; y <= 8; ++y) {
+                for (unsigned i = y + 1; i <= 9; ++i) {
+                    ++clauseIndex;
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[x][y][z]);
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[x][i][z]);
+                    variablesInfo[sudokuVariable[x][y][z]].negativeOccur.addBack(clauseIndex);
+                    variablesInfo[sudokuVariable[x][i][z]].negativeOccur.addBack(clauseIndex);
+                }
+            }
+        }
+    }
+    //Each number appears at most once in each 3x3 sub-grid
+    for (unsigned z = 1; z <= 9; ++z) {
+        for (unsigned i = 0; i <= 2; ++i) {
+            for (unsigned j = 0; j <= 2; ++j) {
+                for (unsigned x = 1; x <= 3; ++x) {
+                    for (unsigned y = 1; y <= 3; ++y) {
+                        for (unsigned k = y + 1; k <= 3; ++k) {
+                            ++clauseIndex;
+                            clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[3 * i + x][3 * j + y][z]);
+                            clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[3 * i + x][3 * j + k][z]);
+                            variablesInfo[sudokuVariable[3 * i + x][3 * j + y][z]].negativeOccur.addBack(clauseIndex);
+                            variablesInfo[sudokuVariable[3 * i + x][3 * j + k][z]].negativeOccur.addBack(clauseIndex);
+                        }
+                        for (unsigned k = x + 1; k <= 3; ++k) {
+                            for (unsigned l = 1; l <= 3; ++l) {
+                                ++clauseIndex;
+                                clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[3 * i + x][3 * j + y][z]);
+                                clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[3 * i + k][3 * j + l][z]);
+                                variablesInfo[sudokuVariable[3 * i + x][3 * j + y][z]].negativeOccur.addBack(clauseIndex);
+                                variablesInfo[sudokuVariable[3 * i + k][3 * j + l][z]].negativeOccur.addBack(clauseIndex);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //The extended encoding is as below:
+
+    //There is at most one number in each entry
+    for (unsigned x = 1; x <= 9; ++x) {
+        for (unsigned y = 1; y <= 9; ++y) {
+            for (unsigned z = 1; z <= 8; ++z) {
+                for (unsigned i = z + 1; i <= 9; ++i) {
+                    ++clauseIndex;
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[x][y][z]);
+                    clausesInfo[clauseIndex].literals.addBack(-sudokuVariable[x][y][i]);
+                    variablesInfo[sudokuVariable[x][y][z]].negativeOccur.addBack(clauseIndex);
+                    variablesInfo[sudokuVariable[x][y][i]].negativeOccur.addBack(clauseIndex);
+                }
+            }
+        }
+    }
+    //Each number appears at least once in each row
+    for (unsigned y = 1; y <= 9; ++y) {
+        for (unsigned z = 1; z <= 9; ++z) {
+            ++clauseIndex;
+            for (unsigned x = 1; x <= 9; ++x) {
+                clausesInfo[clauseIndex].literals.addBack(sudokuVariable[x][y][z]);
+                variablesInfo[sudokuVariable[x][y][z]].positiveOccur.addBack(clauseIndex);
+            }
+        }
+    }
+    //Each number appears at least once in each column
+    for (unsigned x = 1; x <= 9; ++x) {
+        for (unsigned z = 1; z <= 9; ++z) {
+            ++clauseIndex;
+            for (unsigned y = 1; y <= 9; ++y) {
+                clausesInfo[clauseIndex].literals.addBack(sudokuVariable[x][y][z]);
+                variablesInfo[sudokuVariable[x][y][z]].positiveOccur.addBack(clauseIndex);
+            }
+        }
+    }
+    //Each number appears at least once in each 3x3 sub-grid
+    for (unsigned i = 0; i <= 2; ++i) {
+        for (unsigned j = 0; j <= 2; ++j) {
+            for (unsigned z = 1; z <= 9; ++z) {
+                ++clauseIndex;
+                for (unsigned x = 1; x <= 3; ++x) {
+                    for (unsigned y = 1; y <= 3; ++y) {
+                            clausesInfo[clauseIndex].literals.addBack(sudokuVariable[3 * i + x][3 * j + y][z]);
+                            variablesInfo[sudokuVariable[3 * i + x][3 * j + y][z]].positiveOccur.addBack(clauseIndex);
+                        }
+                    }
+                }
+        }
+    }
+}
+
 CNFSolver::~CNFSolver() {
     delete[] clausesInfo;
     delete[] variablesInfo;
@@ -127,6 +268,18 @@ void CNFSolver::printSatisfiabilityInfo(std::ostream &output) {
         output << std::endl;
     }
     output << "t " << timeSpan.count() / 1000.0 << std::endl;
+}
+
+bool CNFSolver::solveSudoku(unsigned sudoku[][10]) {
+    CNFSolver formula(sudoku);
+    if (formula.isSatisfied()) {
+        for (unsigned index = 1; index <= formula.variableNum; ++index) {
+            if (formula.variablesInfo[index].assignedStatus == VariableInfo::True)
+                sudoku[(index - 1) / 81 + 1][(index - 1) / 9 % 9 + 1] = (index - 1) % 9 + 1;
+        }
+        return true;
+    }
+    return false;
 }
 
 CNFSolver::ProcessResult CNFSolver::preprocess() {
