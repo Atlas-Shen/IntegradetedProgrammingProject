@@ -2,13 +2,13 @@
 #define CNFSOLVERTHREAD_H
 
 #include <QThread>
-#include <QString>
+#include <string>
 
 class CNFSolverThread : public QThread {
     Q_OBJECT
 
 public:
-    CNFSolverThread(const QString &, bool, QObject *parent = nullptr);
+    CNFSolverThread(const std::string &, bool, QObject *parent = nullptr);
 
 signals:
     void sendResult(QString);
@@ -17,7 +17,7 @@ protected:
     void run() override;
 
 private:
-    QString fileName;
+    std::string fileName;
     bool selectedBranchingRule;
 };
 

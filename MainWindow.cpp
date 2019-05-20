@@ -3,6 +3,7 @@
 #include "CNFSolverThread.h"
 #include "SudokuGeneratorThread.h"
 #include <QFileDialog>
+#include <QTextCodec>
 #include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -37,7 +38,9 @@ void MainWindow::runCNFSolver() {
     if (fileName == nullptr)
         ui->textBrowser->append("No selected file!\n");
     else {
-        CNFSolverThread *solverThread = new CNFSolverThread(fileName, ui->momsRadioButton->isChecked());
+        QTextCodec *code = QTextCodec::codecForLocale();
+        std::string stdFileName = code->fromUnicode(fileName).data();
+        CNFSolverThread *solverThread = new CNFSolverThread(stdFileName, ui->momsRadioButton->isChecked());
         connect(solverThread, &CNFSolverThread::finished, solverThread, &CNFSolverThread::deleteLater);
         connect(solverThread, &CNFSolverThread::sendResult, this, &MainWindow::appendResult, Qt::AutoConnection);
         solverThread->start();
