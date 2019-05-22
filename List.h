@@ -62,18 +62,18 @@ public:
     bool doesContain(const T &) const;
     const T &front() const; //make sure the list is not empty
     T &front();
-    const T &back() const;  //make sure the list is not empty
+    const T &back() const; //make sure the list is not empty
     T &back();
     Iterator iterator() const;
 
 	//modifiers
     void addFront(const T &);
     void addFront(T &&);
-    void removeFront();           //make sure the list is not empty
+    void removeFront(); //make sure the list is not empty
     void addBack(const T &);
     void addBack(T &&);
     void removeFirstOf(const T &);
-	void clear();
+    void clear();
 
 private:
     Node *head;
